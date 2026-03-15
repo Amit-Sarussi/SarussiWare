@@ -57,7 +57,7 @@ onMounted(fetchUsers);
 	<HelloWorld />
 
 	<section class="db-section">
-		<h2>Database (Prisma + PostgreSQL)</h2>
+		<h2>Database (Prisma + PostgreSQL) Hello</h2>
 		<p v-if="error" class="error">{{ error }}</p>
 		<div v-else-if="loading">Loading users…</div>
 		<template v-else>
