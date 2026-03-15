@@ -48,11 +48,16 @@ export REGISTRY=localhost:5000   # or your server IP, e.g. 192.168.1.10:5000
 
 **6. (Optional) Add cron for auto-deploy on push to main**
 
+On the server:
+
 ```bash
-crontab -e
-# Add this line (use the real path to the repo):
-# */5 * * * * export REGISTRY=localhost:5000; /path/to/SarussiWare/scripts/poll-and-deploy.sh
+cd /home/sarussi/SarussiWare   # or your repo path
+export REGISTRY=localhost:5000  # same value you use for deploy
+./scripts/print-crontab.sh      # prints the exact line to add
+crontab -e                      # paste the line, save and exit
 ```
+
+The line runs every 5 minutes: if `main` has new commits, it pulls and deploys. Otherwise it does nothing.
 
 After step 5, the app and Postgres are running. Open the app at **http://SERVER_LAN_IP:30080** from any device on the LAN (see “Connecting to the web app from the LAN” below).
 
@@ -135,18 +140,15 @@ To avoid exposing it to the internet, do not forward port 30080 on your router.
 
 ## Cron
 
-On the home server:
+On the home server, from the repo directory:
 
-1. Clone the repo and set `REGISTRY` (e.g. in `~/.bashrc` or in the crontab).
+```bash
+export REGISTRY=localhost:5000   # or your server IP, same as for deploy
+./scripts/print-crontab.sh        # copy the line it prints
+crontab -e                        # paste the line, save and exit
+```
 
-2. Add a crontab entry (`crontab -e`):
-   ```bash
-   # Every 5 minutes: fetch and deploy if main changed
-   */5 * * * * export REGISTRY=localhost:5000; /path/to/SarussiWare/scripts/poll-and-deploy.sh
-   ```
-   Use the real path to the repo and the same `REGISTRY` value your cluster uses.
-
-Pushing to `main` will be picked up on the next cron run; the script only runs `deploy-k8s.sh` when `origin/main` has new commits.
+That runs every 5 minutes: if `origin/main` has new commits, it pulls and runs `deploy-k8s.sh`; otherwise it exits without doing anything.
 
 ## Manual deploy on the server
 
