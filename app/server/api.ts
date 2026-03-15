@@ -1,8 +1,9 @@
-import type { IncomingMessage } from "node:http";
-import type { Connect } from "vite";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { prisma } from "./db.js";
 
-function sendJson(res: Connect.ServerResponse, status: number, data: unknown) {
+type NextFunction = (err?: unknown) => void;
+
+function sendJson(res: ServerResponse, status: number, data: unknown) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(data));
@@ -17,7 +18,7 @@ function readBody(req: IncomingMessage): Promise<string> {
   });
 }
 
-export function apiMiddleware(req: Connect.IncomingMessage, res: Connect.ServerResponse, next: Connect.NextFunction): void {
+export function apiMiddleware(req: IncomingMessage, res: ServerResponse, next: NextFunction): void {
   if (!req.url?.startsWith("/api/")) {
     next();
     return;
@@ -25,7 +26,7 @@ export function apiMiddleware(req: Connect.IncomingMessage, res: Connect.ServerR
 
   const handle = async () => {
     try {
-      const path = req.url.slice(4).split("?")[0]; // strip "/api" and query
+      const path = (req.url ?? "").slice(4).split("?")[0]; // strip "/api" and query
 
       if (path === "/users" && req.method === "GET") {
         const users = await prisma.user.findMany({ orderBy: { id: "asc" } });
