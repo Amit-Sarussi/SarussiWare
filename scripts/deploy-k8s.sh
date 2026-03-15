@@ -45,7 +45,7 @@ kubectl wait --for=condition=ready pod -l app=postgres -n "$NAMESPACE" --timeout
 
 echo "[deploy-k8s] Running migrations..."
 envsubst < k8s/migrate-job.yaml | kubectl apply -f -
-kubectl wait --for=condition=complete "job/migrate-${TAG}" -n "$NAMESPACE" --timeout=120s
+kubectl wait --for=condition=complete "job/migrate-${TAG}" -n "$NAMESPACE" --timeout=300s
 
 echo "[deploy-k8s] Deploying app..."
 envsubst < k8s/app-deployment.yaml | kubectl apply -f -

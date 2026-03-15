@@ -4,6 +4,60 @@ These scripts are **only for the machine that runs production** (your home serve
 
 The app runs in a dedicated namespace `sarussiware`. Postgres runs in the same namespace and is used only by this app.
 
+## First-time setup on the server (start here)
+
+When you’re SSH’d into the home server, do this in order:
+
+**1. Check prerequisites**
+
+```bash
+docker --version
+kubectl cluster-info
+envsubst --version   # if missing: apt install gettext  or  dnf install gettext
+```
+
+**2. Start a local registry** (if you don’t have one yet)
+
+```bash
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
+```
+
+If your cluster can’t pull from `localhost:5000`, use the server’s LAN IP instead when setting `REGISTRY` (e.g. `REGISTRY=192.168.1.10:5000`). You may need to mark that registry as insecure in your cluster’s container runtime config.
+
+**3. Clone the repo**
+
+```bash
+cd /path/where/you/want/repos
+git clone <your-repo-url> SarussiWare
+cd SarussiWare
+```
+
+**4. Create and edit the Postgres secret**
+
+```bash
+cp k8s/postgres-secret.yaml.example k8s/postgres-secret.yaml
+nano k8s/postgres-secret.yaml   # set POSTGRES_PASSWORD and the same password in DATABASE_URL
+```
+
+**5. Run the first deploy**
+
+```bash
+export REGISTRY=localhost:5000   # or your server IP, e.g. 192.168.1.10:5000
+./scripts/deploy-k8s.sh
+```
+
+**6. (Optional) Add cron for auto-deploy on push to main**
+
+```bash
+crontab -e
+# Add this line (use the real path to the repo):
+# */5 * * * * export REGISTRY=localhost:5000; /path/to/SarussiWare/scripts/poll-and-deploy.sh
+```
+
+After step 5, the app and Postgres are running in the `sarussiware` namespace. To reach the app from your LAN you still need to expose it (e.g. NodePort or Ingress); see the rest of this doc for DB access (port 30432) and details below.
+
+---
+
 ## Prerequisites on the server
 
 - Docker (for building images)
