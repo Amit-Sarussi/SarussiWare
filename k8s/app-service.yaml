@@ -10,3 +10,19 @@ spec:
       targetPort: 3000
   selector:
     app: web
+---
+# Exposes the web app on the node so you can open it from your browser on the LAN.
+# Open http://SERVER_LAN_IP:30080
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-lan
+  namespace: sarussiware
+spec:
+  type: NodePort
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30080
+  selector:
+    app: web

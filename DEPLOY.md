@@ -54,7 +54,7 @@ crontab -e
 # */5 * * * * export REGISTRY=localhost:5000; /path/to/SarussiWare/scripts/poll-and-deploy.sh
 ```
 
-After step 5, the app and Postgres are running in the `sarussiware` namespace. To reach the app from your LAN you still need to expose it (e.g. NodePort or Ingress); see the rest of this doc for DB access (port 30432) and details below.
+After step 5, the app and Postgres are running. Open the app at **http://SERVER_LAN_IP:30080** from any device on the LAN (see “Connecting to the web app from the LAN” below).
 
 ---
 
@@ -122,6 +122,16 @@ cd app && dotenv -e ../.env.remote -- npx prisma studio
 ```
 
 **Keeping it LAN-only:** The NodePort is open on the server’s IP. To avoid exposing it to the internet, do not forward port 30432 on your router. Optionally, on the server you can restrict that port to your LAN subnet (e.g. with `iptables`/`nftables` or your firewall) so only 192.168.x.x can connect.
+
+## Connecting to the web app from the LAN
+
+The app is exposed on the server via NodePort **30080**. From any device on the same network (browser, phone, etc.) open:
+
+**http://SERVER_LAN_IP:30080**
+
+Example: if the server is `192.168.1.10`, use **http://192.168.1.10:30080**.
+
+To avoid exposing it to the internet, do not forward port 30080 on your router.
 
 ## Cron
 
