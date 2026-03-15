@@ -1,1 +1,5 @@
 .env
+.env.remote
+
+# K8s secret with real credentials — copy from postgres-secret.yaml.example and fill in
+k8s/postgres-secret.yaml
