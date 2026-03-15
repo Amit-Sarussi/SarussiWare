@@ -13,7 +13,14 @@ spec:
       containers:
         - name: migrate
           image: ${IMAGE}
-          command: ["npx", "prisma", "migrate", "deploy"]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              npx prisma migrate deploy || (
+                npx prisma migrate resolve --applied 20240315000000_init &&
+                npx prisma migrate deploy
+              )
           env:
             - name: DATABASE_URL
               valueFrom:
