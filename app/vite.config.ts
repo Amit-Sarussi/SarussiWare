@@ -2,17 +2,19 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// When running in Docker, load env from a dir without .env so app/.env doesn't override APP_DATABASE_URL
-const envDir = process.env.APP_DATABASE_URL ? path.join(__dirname, 'src') : undefined
+// Load env from project root so a single .env is used for the whole project
+const envDir = path.join(__dirname, '..')
 
 // https://vite.dev/config/
 export default defineConfig({
   envDir,
   plugins: [
     vue(),
+    tailwindcss(),
     {
       name: 'api',
       async configureServer(server) {
