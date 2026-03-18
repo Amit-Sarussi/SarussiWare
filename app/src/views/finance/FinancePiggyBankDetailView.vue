@@ -31,7 +31,7 @@ ChartJS.register(
 const route = useRoute();
 const router = useRouter();
 const { getPiggyBank, getGrowth, updatePiggyBank } = usePiggyBanks();
-const { balancesNow, balancesAfterThisMonth, getBalancesAsOf, transactions, endOfCurrentMonth } = useBalances();
+const { balancesNow, balancesAfterThisMonth, getBalancesAsOf, endOfCurrentMonth } = useBalances();
 
 const piggyBank = computed(() => {
 	const id = route.params.id as string;

@@ -31,7 +31,7 @@ ChartJS.register(
 const route = useRoute();
 const router = useRouter();
 const { getInvestmentAccount, getGrowth, updateInvestmentAccount } = useInvestmentAccounts();
-const { balancesNow, balancesAfterThisMonth, getBalancesAsOf, transactions, endOfCurrentMonth } = useBalances();
+const { balancesNow, balancesAfterThisMonth, getBalancesAsOf, endOfCurrentMonth } = useBalances();
 
 const account = computed(() => {
 	const id = route.params.id as string;
