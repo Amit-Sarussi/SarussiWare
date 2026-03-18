@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "../composables/useAuth";
 
@@ -11,6 +11,7 @@ declare global {
 
 const router = useRouter();
 const { user, logout } = useAuth();
+const isAdmin = computed(() => user.value?.permissions?.includes("admin") ?? false);
 const logoutSheetRef = ref<HTMLDialogElement | null>(null);
 
 function openLogoutSheet() {
@@ -20,8 +21,13 @@ function openLogoutSheet() {
 	}
 }
 
+function closeLogoutSheet() {
+	logoutSheetRef.value?.close();
+}
+
 async function handleLogout() {
 	await logout();
+	closeLogoutSheet();
 	router.push("/login");
 }
 </script>
@@ -39,6 +45,23 @@ async function handleLogout() {
 					</router-link>
 				</div>
 				<div>
+					<h2>Finance control</h2>
+					<router-link
+						to="/finance/overview"
+						:aria-current="
+							$route.path === '/finance/overview' ? 'page' : undefined
+						">
+						Overview
+					</router-link>
+					<router-link
+						to="/finance/manage"
+						:aria-current="
+							$route.path === '/finance/manage' ? 'page' : undefined
+						">
+						Manage
+					</router-link>
+				</div>
+				<div v-if="isAdmin">
 					<h2>Administrator</h2>
 					<router-link
 						to="/system-settings"
@@ -84,7 +107,9 @@ async function handleLogout() {
 				</button>
 			</div>
 			<div class="action-sheet-group">
-				<button type="button" class="action-sheet-cancel">Cancel</button>
+				<button type="button" class="action-sheet-cancel" @click="closeLogoutSheet">
+					Cancel
+				</button>
 			</div>
 		</dialog>
 		<main class="main-content">

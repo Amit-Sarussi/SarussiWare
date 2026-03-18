@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
-import { trpc } from "../trpc";
-import { getTrpcErrorMessage, useAuth } from "../composables/useAuth";
+import { trpc } from "../../trpc";
+import { getTrpcErrorMessage, useAuth } from "../../composables/useAuth";
 
 const { user: currentUser } = useAuth();
 

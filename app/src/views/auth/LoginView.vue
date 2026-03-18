@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { useAuth, getTrpcErrorMessage } from "../composables/useAuth";
-import { trpc } from "../trpc";
-import logoSvg from "../assets/sarussiware.svg";
+import { useAuth, getTrpcErrorMessage } from "../../composables/useAuth";
+import { trpc } from "../../trpc";
+import logoSvg from "../../assets/sarussiware.svg";
 
 const router = useRouter();
 const { setUser } = useAuth();

@@ -28,3 +28,55 @@ model Permission {
 
   @@map("permissions")
 }
+
+// --- Finance (per-user; balances are computed, not stored) ---
+
+model MonthlyPay {
+  userId   Int     @map("user_id")
+  monthKey String  @map("month_key") // YYYY-MM
+  amount   Decimal @db.Decimal(12, 2)
+
+  @@id([userId, monthKey])
+  @@map("monthly_pay")
+}
+
+model Subscription {
+  id     String  @id @default(cuid())
+  userId Int     @map("user_id")
+  name   String
+  amount Decimal @db.Decimal(12, 2)
+
+  @@map("subscriptions")
+}
+
+model PiggyBank {
+  id         String  @id @default(cuid())
+  userId     Int     @map("user_id")
+  name       String
+  percentage Decimal @db.Decimal(5, 2)
+
+  @@map("piggy_banks")
+}
+
+model InvestmentAccount {
+  id          String  @id @default(cuid())
+  userId      Int     @map("user_id")
+  name        String
+  percentage  Decimal @db.Decimal(5, 2)
+  yearlyRate  Decimal @map("yearly_rate") @db.Decimal(5, 2)
+
+  @@map("investment_accounts")
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    Int      @map("user_id")
+  dateTime  DateTime @map("date_time")
+  amount    Decimal  @db.Decimal(12, 2)
+  type      String   // income | expense | transfer
+  fromId    String?  @map("from_id") // 'main' or piggy_banks.id or investment_accounts.id
+  toId      String?  @map("to_id")
+  note      String?
+
+  @@map("transactions")
+}
