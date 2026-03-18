@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { prisma } from "../../db.js";
-import { router, protectedProcedure } from "../trpc.js";
+import { router, financeProcedure } from "../trpc.js";
 
 function toNum(d: unknown): number {
 	return Number(d);
@@ -9,7 +9,7 @@ function toNum(d: unknown): number {
 
 export const financeRouter = router({
 	/** Load all finance data in one call (for initial load / refetch) */
-	getAll: protectedProcedure.query(async ({ ctx }) => {
+	getAll: financeProcedure.query(async ({ ctx }) => {
 		const userId = ctx.user!.id;
 		const [monthlyPayRows, subs, pigs, invs, debts, txRows] = await Promise.all([
 			prisma.monthlyPay.findMany({ where: { userId }, orderBy: { monthKey: "asc" } }),
@@ -44,7 +44,7 @@ export const financeRouter = router({
 
 	// --- Monthly pay ---
 	monthlyPay: {
-		list: protectedProcedure.query(async ({ ctx }) => {
+		list: financeProcedure.query(async ({ ctx }) => {
 			const rows = await prisma.monthlyPay.findMany({
 				where: { userId: ctx.user!.id },
 				orderBy: { monthKey: "asc" },
@@ -52,7 +52,7 @@ export const financeRouter = router({
 			return rows.map((r) => ({ monthKey: r.monthKey, amount: toNum(r.amount) }));
 		}),
 
-		set: protectedProcedure
+		set: financeProcedure
 			.input(z.object({ monthKey: z.string().regex(/^\d{4}-\d{2}$/), amount: z.number().min(0) }))
 			.mutation(async ({ ctx, input }) => {
 				await prisma.monthlyPay.upsert({
@@ -69,7 +69,7 @@ export const financeRouter = router({
 				return { ok: true };
 			}),
 
-		setForward: protectedProcedure
+		setForward: financeProcedure
 			.input(z.object({ fromMonthKey: z.string().regex(/^\d{4}-\d{2}$/), amount: z.number().min(0) }))
 			.mutation(async ({ ctx, input }) => {
 				// Build next 24 month keys from current month
@@ -117,7 +117,7 @@ export const financeRouter = router({
 
 	// --- Subscriptions ---
 	subscriptions: {
-		list: protectedProcedure.query(async ({ ctx }) => {
+		list: financeProcedure.query(async ({ ctx }) => {
 			const rows = await prisma.subscription.findMany({
 				where: { userId: ctx.user!.id },
 				orderBy: { name: "asc" },
@@ -129,7 +129,7 @@ export const financeRouter = router({
 			}));
 		}),
 
-		create: protectedProcedure
+		create: financeProcedure
 			.input(z.object({ name: z.string().min(1), amount: z.number().min(0) }))
 			.mutation(async ({ ctx, input }) => {
 				const sub = await prisma.subscription.create({
@@ -142,7 +142,7 @@ export const financeRouter = router({
 				return { id: sub.id, name: sub.name, amount: toNum(sub.amount) };
 			}),
 
-		update: protectedProcedure
+		update: financeProcedure
 			.input(
 				z.object({
 					id: z.string().min(1),
@@ -167,7 +167,7 @@ export const financeRouter = router({
 				return { id: sub.id, name: sub.name, amount: toNum(sub.amount) };
 			}),
 
-		delete: protectedProcedure
+		delete: financeProcedure
 			.input(z.object({ id: z.string().min(1) }))
 			.mutation(async ({ ctx, input }) => {
 				const existing = await prisma.subscription.findFirst({
@@ -183,7 +183,7 @@ export const financeRouter = router({
 
 	// --- Piggy banks ---
 	piggyBanks: {
-		list: protectedProcedure.query(async ({ ctx }) => {
+		list: financeProcedure.query(async ({ ctx }) => {
 			const rows = await prisma.piggyBank.findMany({
 				where: { userId: ctx.user!.id },
 				orderBy: { name: "asc" },
@@ -195,7 +195,7 @@ export const financeRouter = router({
 			}));
 		}),
 
-		create: protectedProcedure
+		create: financeProcedure
 			.input(z.object({ name: z.string().min(1), percentage: z.number().min(0).max(100) }))
 			.mutation(async ({ ctx, input }) => {
 				const row = await prisma.piggyBank.create({
@@ -208,7 +208,7 @@ export const financeRouter = router({
 				return { id: row.id, name: row.name, percentage: toNum(row.percentage) };
 			}),
 
-		update: protectedProcedure
+		update: financeProcedure
 			.input(
 				z.object({
 					id: z.string().min(1),
@@ -233,7 +233,7 @@ export const financeRouter = router({
 				return { id: row.id, name: row.name, percentage: toNum(row.percentage) };
 			}),
 
-		delete: protectedProcedure
+		delete: financeProcedure
 			.input(z.object({ id: z.string().min(1) }))
 			.mutation(async ({ ctx, input }) => {
 				const existing = await prisma.piggyBank.findFirst({
@@ -249,7 +249,7 @@ export const financeRouter = router({
 
 	// --- Investment accounts ---
 	investmentAccounts: {
-		list: protectedProcedure.query(async ({ ctx }) => {
+		list: financeProcedure.query(async ({ ctx }) => {
 			const rows = await prisma.investmentAccount.findMany({
 				where: { userId: ctx.user!.id },
 				orderBy: { name: "asc" },
@@ -262,7 +262,7 @@ export const financeRouter = router({
 			}));
 		}),
 
-		create: protectedProcedure
+		create: financeProcedure
 			.input(
 				z.object({
 					name: z.string().min(1),
@@ -287,7 +287,7 @@ export const financeRouter = router({
 				};
 			}),
 
-		update: protectedProcedure
+		update: financeProcedure
 			.input(
 				z.object({
 					id: z.string().min(1),
@@ -319,7 +319,7 @@ export const financeRouter = router({
 				};
 			}),
 
-		delete: protectedProcedure
+		delete: financeProcedure
 			.input(z.object({ id: z.string().min(1) }))
 			.mutation(async ({ ctx, input }) => {
 				const existing = await prisma.investmentAccount.findFirst({
@@ -335,7 +335,7 @@ export const financeRouter = router({
 
 	// --- Debts ---
 	debts: {
-		list: protectedProcedure.query(async ({ ctx }) => {
+		list: financeProcedure.query(async ({ ctx }) => {
 			const rows = await prisma.debt.findMany({
 				where: { userId: ctx.user!.id },
 				orderBy: { name: "asc" },
@@ -347,7 +347,7 @@ export const financeRouter = router({
 			}));
 		}),
 
-		create: protectedProcedure
+		create: financeProcedure
 			.input(z.object({ name: z.string().min(1), totalAmount: z.number().min(0) }))
 			.mutation(async ({ ctx, input }) => {
 				const row = await prisma.debt.create({
@@ -364,7 +364,7 @@ export const financeRouter = router({
 				};
 			}),
 
-		update: protectedProcedure
+		update: financeProcedure
 			.input(
 				z.object({
 					id: z.string().min(1),
@@ -389,7 +389,7 @@ export const financeRouter = router({
 				return { id: row.id, name: row.name, totalAmount: toNum(row.totalAmount) };
 			}),
 
-		delete: protectedProcedure
+		delete: financeProcedure
 			.input(z.object({ id: z.string().min(1) }))
 			.mutation(async ({ ctx, input }) => {
 				const existing = await prisma.debt.findFirst({
@@ -405,7 +405,7 @@ export const financeRouter = router({
 
 	// --- Transactions ---
 	transactions: {
-		list: protectedProcedure.query(async ({ ctx }) => {
+		list: financeProcedure.query(async ({ ctx }) => {
 			const rows = await prisma.transaction.findMany({
 				where: { userId: ctx.user!.id },
 				orderBy: { dateTime: "desc" },
@@ -421,7 +421,7 @@ export const financeRouter = router({
 			}));
 		}),
 
-		create: protectedProcedure
+		create: financeProcedure
 			.input(
 				z.object({
 					dateTime: z.string().datetime(),
@@ -499,7 +499,7 @@ export const financeRouter = router({
 				};
 			}),
 
-		update: protectedProcedure
+		update: financeProcedure
 			.input(
 				z.object({
 					id: z.string().min(1),
@@ -584,7 +584,7 @@ export const financeRouter = router({
 				};
 			}),
 
-		delete: protectedProcedure
+		delete: financeProcedure
 			.input(z.object({ id: z.string().min(1) }))
 			.mutation(async ({ ctx, input }) => {
 				const existing = await prisma.transaction.findFirst({

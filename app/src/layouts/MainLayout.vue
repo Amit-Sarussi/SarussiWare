@@ -12,7 +12,15 @@ declare global {
 const router = useRouter();
 const { user, logout } = useAuth();
 const appVersion = __APP_VERSION__;
-const isAdmin = computed(() => user.value?.permissions?.includes("admin") ?? false);
+const isAdmin = computed(
+	() => user.value?.permissions?.includes("admin") ?? false,
+);
+const canAccessFinance = computed(
+	() =>
+		(user.value?.permissions?.includes("finance") ||
+			user.value?.permissions?.includes("admin")) ??
+		false,
+);
 const logoutSheetRef = ref<HTMLDialogElement | null>(null);
 
 function openLogoutSheet() {
@@ -45,7 +53,7 @@ async function handleLogout() {
 						Home
 					</router-link>
 				</div>
-				<div>
+				<div v-if="canAccessFinance">
 					<h2>Finance control</h2>
 					<router-link
 						to="/finance/overview"
@@ -85,7 +93,9 @@ async function handleLogout() {
 						Log out ({{ user?.name }})
 					</button>
 				</div>
-				<p class="sidebar-version" aria-label="App version">v{{ appVersion }}</p>
+				<p class="sidebar-version" aria-label="App version">
+					v{{ appVersion }}
+				</p>
 			</nav>
 		</aside>
 
@@ -109,7 +119,10 @@ async function handleLogout() {
 				</button>
 			</div>
 			<div class="action-sheet-group">
-				<button type="button" class="action-sheet-cancel" @click="closeLogoutSheet">
+				<button
+					type="button"
+					class="action-sheet-cancel"
+					@click="closeLogoutSheet">
 					Cancel
 				</button>
 			</div>

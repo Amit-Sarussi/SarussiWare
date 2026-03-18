@@ -57,6 +57,12 @@ router.beforeEach(async (to, from) => {
       const { user } = useAuth();
       if (!user.value?.permissions?.includes("admin")) return { path: "/" };
     }
+    if (to.path.startsWith("/finance")) {
+      const { user } = useAuth();
+      const canFinance =
+        user.value?.permissions?.includes("finance") || user.value?.permissions?.includes("admin");
+      if (!canFinance) return { path: "/" };
+    }
     // Load finance data only once when entering finance (skip when already on a finance page)
     if (to.path.startsWith("/finance") && !from.path.startsWith("/finance")) {
       const { load } = useFinanceData();
@@ -77,6 +83,12 @@ router.beforeEach(async (to, from) => {
     if (to.path === "/system-settings") {
       const { user } = useAuth();
       if (!user.value?.permissions?.includes("admin")) return { path: "/" };
+    }
+    if (to.path.startsWith("/finance")) {
+      const { user } = useAuth();
+      const canFinance =
+        user.value?.permissions?.includes("finance") || user.value?.permissions?.includes("admin");
+      if (!canFinance) return { path: "/" };
     }
     // Load finance data only once when entering finance (cache for all sub-navigation)
     if (to.path.startsWith("/finance") && !from.path.startsWith("/finance")) {
