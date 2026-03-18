@@ -13,6 +13,7 @@ import FinanceManagePiggyBanksView from "../views/finance/FinanceManagePiggyBank
 import FinancePiggyBankDetailView from "../views/finance/FinancePiggyBankDetailView.vue";
 import FinanceManageInvestmentAccountsView from "../views/finance/FinanceManageInvestmentAccountsView.vue";
 import FinanceInvestmentAccountDetailView from "../views/finance/FinanceInvestmentAccountDetailView.vue";
+import FinanceManageDebtsView from "../views/finance/FinanceManageDebtsView.vue";
 import FinanceManageTransactionsView from "../views/finance/FinanceManageTransactionsView.vue";
 import LoginView from "../views/auth/LoginView.vue";
 
@@ -34,6 +35,7 @@ const router = createRouter({
         { path: "finance/piggy-banks/:id", name: "finance-piggy-bank-detail", component: FinancePiggyBankDetailView },
         { path: "finance/manage/investment-accounts", name: "finance-manage-investment-accounts", component: FinanceManageInvestmentAccountsView },
         { path: "finance/investment-accounts/:id", name: "finance-investment-account-detail", component: FinanceInvestmentAccountDetailView },
+        { path: "finance/manage/debts", name: "finance-manage-debts", component: FinanceManageDebtsView },
         { path: "finance/manage/transactions", name: "finance-manage-transactions", component: FinanceManageTransactionsView },
       ],
     },
@@ -41,7 +43,7 @@ const router = createRouter({
   ],
 });
 
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, from) => {
   const { fetchMe, isLoggedIn, loaded } = useAuth();
 
   if (loaded.value) {
@@ -55,7 +57,8 @@ router.beforeEach(async (to) => {
       const { user } = useAuth();
       if (!user.value?.permissions?.includes("admin")) return { path: "/" };
     }
-    if (to.path.startsWith("/finance")) {
+    // Load finance data only once when entering finance (skip when already on a finance page)
+    if (to.path.startsWith("/finance") && !from.path.startsWith("/finance")) {
       const { load } = useFinanceData();
       await load();
     }
@@ -75,7 +78,8 @@ router.beforeEach(async (to) => {
       const { user } = useAuth();
       if (!user.value?.permissions?.includes("admin")) return { path: "/" };
     }
-    if (to.path.startsWith("/finance")) {
+    // Load finance data only once when entering finance (cache for all sub-navigation)
+    if (to.path.startsWith("/finance") && !from.path.startsWith("/finance")) {
       const { load } = useFinanceData();
       await load();
     }

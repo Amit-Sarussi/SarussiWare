@@ -4,12 +4,14 @@ import { useRouter } from "vue-router";
 import { useBalances, type Transaction, type AccountId } from "../../composables/useBalances";
 import { usePiggyBanks } from "../../composables/usePiggyBanks";
 import { useInvestmentAccounts } from "../../composables/useInvestmentAccounts";
+import { useDebts } from "../../composables/useDebts";
 import { formatShekels } from "../../composables/useCurrency";
 
 const router = useRouter();
 const { transactions, addTransaction, updateTransaction, removeTransaction } = useBalances();
 const { piggyBanks, getPiggyBank } = usePiggyBanks();
 const { investmentAccounts, getInvestmentAccount } = useInvestmentAccounts();
+const { debts, getDebt, getPaidToDebt } = useDebts();
 
 const showAddForm = ref(false);
 const editingTxId = ref<string | null>(null);
@@ -23,19 +25,24 @@ const formNote = ref("");
 const formError = ref("");
 
 const accountOptions = computed(() => {
-	const options: { value: AccountId; label: string }[] = [{ value: "main", label: "Main" }];
+	const options: { value: AccountId; label: string }[] = [{ value: "main", label: "Balance" }];
 	piggyBanks.value.forEach((p) => options.push({ value: p.id, label: `Piggy: ${p.name}` }));
 	investmentAccounts.value.forEach((i) => options.push({ value: i.id, label: `Investment: ${i.name}` }));
+	debts.value
+		.filter((d) => getPaidToDebt(d.id) < d.totalAmount)
+		.forEach((d) => options.push({ value: d.id, label: `Debt: ${d.name}` }));
 	return options;
 });
 
 function accountLabel(id: AccountId | null): string {
 	if (!id) return "—";
-	if (id === "main") return "Main";
+	if (id === "main") return "Balance";
 	const p = getPiggyBank(id);
 	if (p) return p.name;
 	const i = getInvestmentAccount(id);
 	if (i) return i.name;
+	const d = getDebt(id);
+	if (d) return d.name;
 	return id;
 }
 
@@ -152,7 +159,7 @@ function parseAmountInput(event: Event) {
 		</nav>
 		<h1>Transactions</h1>
 		<p class="text-tertiary-foreground text-[15px] mt-1">
-			Add income (money from nowhere), expenses (money out), or transfers between Main and piggy banks or investment accounts.
+			Add income (money from nowhere), expenses (money out), or transfers between Balance and piggy banks or investment accounts.
 		</p>
 
 		<div class="mt-6 flex gap-2">

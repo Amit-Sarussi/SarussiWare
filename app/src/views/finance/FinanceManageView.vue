@@ -42,11 +42,19 @@
 				</p>
 			</router-link>
 			<router-link
+				:to="{ name: 'finance-manage-debts' }"
+				class="card flex flex-col min-h-24 p-5 no-underline text-inherit hover:bg-(--color-panel-hover)">
+				<span class="text-[17px] font-semibold">Manage debts</span>
+				<p class="text-[15px] text-tertiary-foreground mt-1">
+					Track debts by name and total amount; record payments as transfers to report progress.
+				</p>
+			</router-link>
+			<router-link
 				:to="{ name: 'finance-manage-transactions' }"
 				class="card flex flex-col min-h-24 p-5 no-underline text-inherit hover:bg-(--color-panel-hover)">
 				<span class="text-[17px] font-semibold">Transactions</span>
 				<p class="text-[15px] text-tertiary-foreground mt-1">
-					Add income, expenses, or transfers between Main and accounts.
+					Add income, expenses, or transfers between Balance and accounts.
 				</p>
 			</router-link>
 		</div>

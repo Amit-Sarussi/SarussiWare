@@ -11,11 +11,12 @@ export const financeRouter = router({
 	/** Load all finance data in one call (for initial load / refetch) */
 	getAll: protectedProcedure.query(async ({ ctx }) => {
 		const userId = ctx.user!.id;
-		const [monthlyPayRows, subs, pigs, invs, txRows] = await Promise.all([
+		const [monthlyPayRows, subs, pigs, invs, debts, txRows] = await Promise.all([
 			prisma.monthlyPay.findMany({ where: { userId }, orderBy: { monthKey: "asc" } }),
 			prisma.subscription.findMany({ where: { userId }, orderBy: { name: "asc" } }),
 			prisma.piggyBank.findMany({ where: { userId }, orderBy: { name: "asc" } }),
 			prisma.investmentAccount.findMany({ where: { userId }, orderBy: { name: "asc" } }),
+			prisma.debt.findMany({ where: { userId }, orderBy: { name: "asc" } }),
 			prisma.transaction.findMany({ where: { userId }, orderBy: { dateTime: "desc" } }),
 		]);
 		return {
@@ -28,6 +29,7 @@ export const financeRouter = router({
 				percentage: toNum(r.percentage),
 				yearlyRate: toNum(r.yearlyRate),
 			})),
+			debts: debts.map((r) => ({ id: r.id, name: r.name, totalAmount: toNum(r.totalAmount) })),
 			transactions: txRows.map((r) => ({
 				id: r.id,
 				dateTime: r.dateTime.toISOString(),
@@ -331,6 +333,76 @@ export const financeRouter = router({
 			}),
 	},
 
+	// --- Debts ---
+	debts: {
+		list: protectedProcedure.query(async ({ ctx }) => {
+			const rows = await prisma.debt.findMany({
+				where: { userId: ctx.user!.id },
+				orderBy: { name: "asc" },
+			});
+			return rows.map((r) => ({
+				id: r.id,
+				name: r.name,
+				totalAmount: toNum(r.totalAmount),
+			}));
+		}),
+
+		create: protectedProcedure
+			.input(z.object({ name: z.string().min(1), totalAmount: z.number().min(0) }))
+			.mutation(async ({ ctx, input }) => {
+				const row = await prisma.debt.create({
+					data: {
+						userId: ctx.user!.id,
+						name: input.name.trim(),
+						totalAmount: input.totalAmount,
+					},
+				});
+				return {
+					id: row.id,
+					name: row.name,
+					totalAmount: toNum(row.totalAmount),
+				};
+			}),
+
+		update: protectedProcedure
+			.input(
+				z.object({
+					id: z.string().min(1),
+					name: z.string().min(1).optional(),
+					totalAmount: z.number().min(0).optional(),
+				})
+			)
+			.mutation(async ({ ctx, input }) => {
+				const existing = await prisma.debt.findFirst({
+					where: { id: input.id, userId: ctx.user!.id },
+				});
+				if (!existing) {
+					throw new TRPCError({ code: "NOT_FOUND", message: "Debt not found" });
+				}
+				const data: { name?: string; totalAmount?: number } = {};
+				if (input.name !== undefined) data.name = input.name.trim();
+				if (input.totalAmount !== undefined) data.totalAmount = input.totalAmount;
+				const row = await prisma.debt.update({
+					where: { id: input.id },
+					data,
+				});
+				return { id: row.id, name: row.name, totalAmount: toNum(row.totalAmount) };
+			}),
+
+		delete: protectedProcedure
+			.input(z.object({ id: z.string().min(1) }))
+			.mutation(async ({ ctx, input }) => {
+				const existing = await prisma.debt.findFirst({
+					where: { id: input.id, userId: ctx.user!.id },
+				});
+				if (!existing) {
+					throw new TRPCError({ code: "NOT_FOUND", message: "Debt not found" });
+				}
+				await prisma.debt.delete({ where: { id: input.id } });
+				return { ok: true };
+			}),
+	},
+
 	// --- Transactions ---
 	transactions: {
 		list: protectedProcedure.query(async ({ ctx }) => {
@@ -362,19 +434,27 @@ export const financeRouter = router({
 			)
 			.mutation(async ({ ctx, input }) => {
 				const userId = ctx.user!.id;
-				// Validate fromId / toId: must be 'main' or a valid piggy/investment id for this user
 				const piggyIds = (await prisma.piggyBank.findMany({ where: { userId }, select: { id: true } })).map(
 					(p) => p.id
 				);
 				const invIds = (
 					await prisma.investmentAccount.findMany({ where: { userId }, select: { id: true } })
 				).map((i) => i.id);
+				const debtIds = (await prisma.debt.findMany({ where: { userId }, select: { id: true } })).map(
+					(d) => d.id
+				);
 				const validAccountIds = new Set([...piggyIds, ...invIds]);
+				const validToIdsTransfer = new Set([...piggyIds, ...invIds, ...debtIds]);
 
-				function validId(id: string | null): boolean {
+				function validFromId(id: string | null): boolean {
 					if (id === null) return true;
 					if (id === "main") return true;
 					return validAccountIds.has(id);
+				}
+				function validToIdTransfer(id: string | null): boolean {
+					if (id === null) return true;
+					if (id === "main") return true;
+					return validToIdsTransfer.has(id);
 				}
 
 				if (input.type === "income") {
@@ -392,7 +472,7 @@ export const financeRouter = router({
 						throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid fromId for expense" });
 					}
 				} else {
-					if (!validId(input.fromId) || !validId(input.toId) || input.fromId === input.toId) {
+					if (!validFromId(input.fromId) || !validToIdTransfer(input.toId) || input.fromId === input.toId) {
 						throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid fromId or toId for transfer" });
 					}
 				}
@@ -445,12 +525,21 @@ export const financeRouter = router({
 				const invIds = (
 					await prisma.investmentAccount.findMany({ where: { userId }, select: { id: true } })
 				).map((i) => i.id);
+				const debtIds = (await prisma.debt.findMany({ where: { userId }, select: { id: true } })).map(
+					(d) => d.id
+				);
 				const validAccountIds = new Set([...piggyIds, ...invIds]);
+				const validToIdsTransfer = new Set([...piggyIds, ...invIds, ...debtIds]);
 
-				function validId(id: string | null): boolean {
+				function validFromId(id: string | null): boolean {
 					if (id === null) return true;
 					if (id === "main") return true;
 					return validAccountIds.has(id);
+				}
+				function validToIdTransfer(id: string | null): boolean {
+					if (id === null) return true;
+					if (id === "main") return true;
+					return validToIdsTransfer.has(id);
 				}
 
 				if (input.type === "income") {
@@ -468,7 +557,7 @@ export const financeRouter = router({
 						throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid fromId for expense" });
 					}
 				} else {
-					if (!validId(input.fromId) || !validId(input.toId) || input.fromId === input.toId) {
+					if (!validFromId(input.fromId) || !validToIdTransfer(input.toId) || input.fromId === input.toId) {
 						throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid fromId or toId for transfer" });
 					}
 				}

@@ -11,6 +11,7 @@ declare global {
 
 const router = useRouter();
 const { user, logout } = useAuth();
+const appVersion = __APP_VERSION__;
 const isAdmin = computed(() => user.value?.permissions?.includes("admin") ?? false);
 const logoutSheetRef = ref<HTMLDialogElement | null>(null);
 
@@ -84,6 +85,7 @@ async function handleLogout() {
 						Log out ({{ user?.name }})
 					</button>
 				</div>
+				<p class="sidebar-version" aria-label="App version">v{{ appVersion }}</p>
 			</nav>
 		</aside>
 
@@ -127,6 +129,9 @@ async function handleLogout() {
 .sidebar-wrapper {
 	flex-shrink: 0;
 	width: 220px;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
 	border-right: 1px solid var(--color-border);
 	background: var(--color-secondary);
 }
@@ -134,8 +139,20 @@ async function handleLogout() {
 .sidebar {
 	position: sticky;
 	top: 0;
+	flex: 1;
+	min-height: 0;
 	max-height: 100vh;
 	padding-top: 1rem;
+	display: flex;
+	flex-direction: column;
+}
+
+.sidebar-version {
+	margin-top: auto;
+	padding: 1rem 1rem 1.25rem;
+	font-size: 0.75rem;
+	color: var(--color-tertiary-foreground, #6b7280);
+	text-align: right;
 }
 
 .main-content {

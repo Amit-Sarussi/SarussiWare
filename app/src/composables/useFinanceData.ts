@@ -25,6 +25,12 @@ export interface InvestmentAccountRow {
 	yearlyRate: number;
 }
 
+export interface DebtRow {
+	id: string;
+	name: string;
+	totalAmount: number;
+}
+
 export interface TransactionRow {
 	id: string;
 	dateTime: string;
@@ -39,6 +45,7 @@ const monthlyPayList: Ref<MonthlyPayRow[]> = ref([]);
 const subscriptionsList: Ref<SubscriptionRow[]> = ref([]);
 const piggyBanksList: Ref<PiggyBankRow[]> = ref([]);
 const investmentAccountsList: Ref<InvestmentAccountRow[]> = ref([]);
+const debtsList: Ref<DebtRow[]> = ref([]);
 const transactionsList: Ref<TransactionRow[]> = ref([]);
 
 let loadPromise: Promise<void> | null = null;
@@ -52,6 +59,7 @@ export function useFinanceData() {
 				subscriptionsList.value = data.subscriptions;
 				piggyBanksList.value = data.piggyBanks;
 				investmentAccountsList.value = data.investmentAccounts;
+				debtsList.value = data.debts;
 				transactionsList.value = data.transactions;
 			}));
 		await p;
@@ -63,6 +71,7 @@ export function useFinanceData() {
 		subscriptionsList,
 		piggyBanksList,
 		investmentAccountsList,
+		debtsList,
 		transactionsList,
 		load,
 	};

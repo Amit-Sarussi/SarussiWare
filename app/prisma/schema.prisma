@@ -68,6 +68,15 @@ model InvestmentAccount {
   @@map("investment_accounts")
 }
 
+model Debt {
+  id         String  @id @default(cuid())
+  userId     Int     @map("user_id")
+  name       String
+  totalAmount Decimal @map("total_amount") @db.Decimal(12, 2)
+
+  @@map("debts")
+}
+
 model Transaction {
   id        String   @id @default(cuid())
   userId    Int      @map("user_id")

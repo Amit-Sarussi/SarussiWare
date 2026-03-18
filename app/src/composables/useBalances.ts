@@ -34,10 +34,11 @@ function monthlyMul(yearlyRate: number): number {
 }
 
 export function useBalances() {
-	const { transactionsList } = useFinanceData();
+	const { transactionsList, debtsList } = useFinanceData();
 	const { monthKeys, resolvedPayByMonth, totalSubscriptionAmount } = useMonthlyPay();
 	const { piggyBanks } = usePiggyBanks();
 	const { investmentAccounts } = useInvestmentAccounts();
+	const debtIds = computed(() => new Set(debtsList.value.map((d) => d.id)));
 
 	const transactions = computed(() => transactionsList.value);
 
@@ -132,6 +133,8 @@ export function useBalances() {
 				if (t.fromId === "main") main -= amt;
 				else if (piggyBank[t.fromId] !== undefined) piggyBank[t.fromId] -= amt;
 				else if (investmentAccount[t.fromId] !== undefined) investmentAccount[t.fromId] -= amt;
+				// Payment to debt: money leaves fromId but does not go to any balance account
+				if (debtIds.value.has(t.toId)) return;
 				if (t.toId === "main") main += amt;
 				else if (piggyBank[t.toId] !== undefined) piggyBank[t.toId] += amt;
 				else if (investmentAccount[t.toId] !== undefined) investmentAccount[t.toId] += amt;
